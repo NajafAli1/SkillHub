@@ -1,0 +1,64 @@
+# 1. Kelas Induk Paling Atas (Level 1)
+class Kendaraan:
+    def __init__(self, merk, tahun_keluaran, harga_sewa_dasar):
+        self.merk = merk
+        self.tahun_keluaran = tahun_keluaran
+        self.harga_sewa_dasar = harga_sewa_dasar
+
+    def hitung_biaya_sewa(self, hari):
+        return hari * self.harga_sewa_dasar
+
+    def tampilkan_info(self):
+        print(f"Merk Kendaraan : {self.merk}")
+        print(f"Tahun Keluaran : {self.tahun_keluaran}")
+        print(f"Tarif Dasar    : Rp{self.harga_sewa_dasar} / hari")
+
+
+# 2. Kelas Menengah (Level 2) - Mewarisi Kendaraan
+class Motor(Kendaraan):
+    def __init__(self, merk, tahun_keluaran, harga_sewa_dasar, jenis_motor):
+        super().__init__(merk, tahun_keluaran, harga_sewa_dasar)
+        self.jenis_motor = jenis_motor
+
+    # Overriding Method tampilkan_info
+    def tampilkan_info(self):
+        super().tampilkan_info() # Memanggil method dari kelas induk
+        print(f"Jenis Motor    : {self.jenis_motor}")
+
+
+# 3. Kelas Turunan Terbawah (Level 3) - Mewarisi Motor
+class MotorPremium(Motor):
+    def __init__(self, merk, tahun_keluaran, harga_sewa_dasar, jenis_motor, biaya_asuransi, fasilitas):
+        super().__init__(merk, tahun_keluaran, harga_sewa_dasar, jenis_motor)
+        self.biaya_asuransi = biaya_asuransi
+        self.fasilitas = fasilitas
+
+    # Overriding Method hitung_biaya_sewa
+    def hitung_biaya_sewa(self, hari):
+        return super().hitung_biaya_sewa(hari) + self.biaya_asuransi
+
+    # Overriding Method tampilkan_info
+    def tampilkan_info(self):
+        super().tampilkan_info()
+        print(f"Fasilitas VIP  : {self.fasilitas}")
+        print(f"Biaya Asuransi : Rp{self.biaya_asuransi} (Flat per transaksi)")
+
+
+# 4. Program Utama
+if __name__ == "__main__":
+    lama_sewa = 3 # Contoh simulasi sewa selama 3 hari
+    
+    print("=========================================")
+    print("   TRANSAKSI SEWA MOTOR STANDAR (LVL 2)  ")
+    print("=========================================")
+    motor_standar = Motor("Honda Beat Street", 2022, 80000, "Matic")
+    motor_standar.tampilkan_info()
+    print(f"-> TOTAL BIAYA ({lama_sewa} Hari) : Rp{motor_standar.hitung_biaya_sewa(lama_sewa)}")
+
+    print("\n=========================================")
+    print("   TRANSAKSI SEWA MOTOR PREMIUM (LVL 3)  ")
+    print("=========================================")
+    motor_premium = MotorPremium("Yamaha XMAX", 2024, 250000, "Matic Besar", 100000, "2 Helm Fullface + Jas Hujan + Holder HP")
+    motor_premium.tampilkan_info()
+    print(f"-> TOTAL BIAYA ({lama_sewa} Hari) : Rp{motor_premium.hitung_biaya_sewa(lama_sewa)}")
+    print("=========================================")

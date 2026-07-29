@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillHub - Masuk / Daftar</title>
+  <link rel="stylesheet" href="css/style.css?v=20260608">
+</head>
+
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-logo-text">Skill<span>Hub</span></div>
+        <div class="auth-logo-sub">Platform lowongan kerja untuk mahasiswa & client</div>
+      </div>
+
+      <div class="auth-tab-group">
+        <button type="button" class="auth-tab active" data-tab="login">Masuk</button>
+        <button type="button" class="auth-tab" data-tab="register">Daftar</button>
+      </div>
+
+      <div id="pesanError" class="error-message" aria-live="assertive"></div>
+
+      <form id="formLogin" class="auth-form active">
+        <div class="form-group">
+          <label for="email_login">Email</label>
+          <input type="email" id="email_login" placeholder="nama@domain.com" required>
+        </div>
+        <div class="form-group">
+          <label for="password_login">Password</label>
+          <input type="password" id="password_login" placeholder="Masukkan password" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg">Masuk</button>
+      </form>
+
+      <form id="formRegister" class="auth-form">
+        <div class="form-group">
+          <label for="reg_nama">Nama Lengkap / Perusahaan</label>
+          <input type="text" id="reg_nama" placeholder="Contoh: Budi Santoso" required>
+        </div>
+        <div class="form-group">
+          <label for="reg_email">Email</label>
+          <input type="email" id="reg_email" placeholder="nama@domain.com" required>
+        </div>
+        <div class="form-group">
+          <label for="reg_password">Password</label>
+          <input type="password" id="reg_password" placeholder="Minimal 8 karakter" required>
+        </div>
+        <div class="form-group">
+          <label for="reg_role">Daftar Sebagai</label>
+          <select id="reg_role" required>
+            <option value="mahasiswa">Mahasiswa (Pencari Kerja)</option>
+            <option value="client">Client (Pemberi Kerja)</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-accent btn-full btn-lg">Daftar</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/index.js"></script>
+</body>
+
+</html>

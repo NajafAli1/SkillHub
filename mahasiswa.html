@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Mahasiswa — SkillHub</title>
+  <link rel="stylesheet" href="css/style.css?v=20260608">
+</head>
+<body>
+
+  <nav class="navbar">
+    <span class="navbar-brand">Skill<span>Hub</span></span>
+    <div class="navbar-user">
+      <span class="navbar-greeting">Hai, <strong id="namaPanggilan">Mahasiswa</strong></span>
+      <button onclick="logout()" class="btn btn-ghost btn-sm">Keluar</button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <h1>Temukan Pekerjaan Impianmu</h1>
+        <p>Jelajahi lowongan terbaru dan kirimkan lamaran terbaikmu.</p>
+      </div>
+
+    <div id="wadahLamar" class="lamar-panel">
+      <h3 style="margin-bottom: 18px; color: var(--primary);">✉ Kirim Lamaran</h3>
+      <form id="formLamarKerja">
+        <input type="hidden" id="lamar_id_pekerjaan">
+        <div class="form-group">
+          <label for="pesan_pelamar">Cover Letter — Pesan untuk Client</label>
+          <textarea id="pesan_pelamar" rows="5" placeholder="Jelaskan skill kamu, pengalaman relevan, dan kenapa kamu adalah kandidat terbaik untuk posisi ini..." required></textarea>
+        </div>
+        <div class="job-card-actions">
+          <button type="submit" class="btn btn-success">Kirim Lamaran</button>
+          <button type="button" onclick="batalLamar()" class="btn btn-ghost">Batal</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">Lowongan Tersedia</span>
+    </div>
+    <div id="daftarLoker">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        Memuat lowongan...
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="section-header">
+      <span class="section-title">Status Lamaran Saya</span>
+    </div>
+    <div id="statusLamaran">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        Memuat data lamaran...
+      </div>
+    </div>
+  </div>
+  </main>
+
+  <script src="js/mahasiswa.js"></script>
+</body>
+</html>

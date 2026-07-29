@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Client — SkillHub</title>
+  <link rel="stylesheet" href="css/style.css?v=20260608">
+</head>
+<body>
+
+  <nav class="navbar">
+    <span class="navbar-brand">Skill<span>Hub</span></span>
+    <div class="navbar-user">
+      <span class="navbar-greeting">Hai, <strong id="namaPanggilan">Client</strong></span>
+      <button onclick="logout()" class="btn btn-ghost btn-sm">Keluar</button>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <h1>Dashboard Perusahaan</h1>
+        <p>Kelola lowongan dan temukan kandidat terbaik untuk tim Anda.</p>
+      </div>
+
+    <div class="section-header">
+      <span class="section-title">Posting Lowongan Baru</span>
+    </div>
+    <div class="card form-card">
+      <form id="formTambahKerja">
+        <div class="form-group">
+          <label for="judul_pekerjaan">Judul Pekerjaan</label>
+          <input type="text" id="judul_pekerjaan" placeholder="Contoh: UI/UX Designer Intern" required>
+        </div>
+        <div class="form-group">
+          <label for="deskripsi">Deskripsi Pekerjaan</label>
+          <textarea id="deskripsi" rows="4" placeholder="Jelaskan tugas, kualifikasi, dan skill yang dibutuhkan..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Posting Pekerjaan</button>
+        <p id="pesanClient" class="text-muted" style="margin-top: 10px;"></p>
+      </form>
+    </div>
+
+    <div id="wadahEdit" class="edit-panel">
+      <h3 style="margin-bottom: 18px; color: var(--primary);">✏ Edit Pekerjaan</h3>
+      <form id="formEditPekerjaan">
+        <input type="hidden" id="edit_id_pekerjaan">
+        <div class="form-group">
+          <label for="edit_judul_pekerjaan">Judul Pekerjaan</label>
+          <input type="text" id="edit_judul_pekerjaan" required>
+        </div>
+        <div class="form-group">
+          <label for="edit_deskripsi">Deskripsi</label>
+          <textarea id="edit_deskripsi" rows="4" required></textarea>
+        </div>
+        <div class="job-card-actions">
+          <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+          <button type="button" onclick="batalEdit()" class="btn btn-ghost">Batal</button>
+        </div>
+      </form>
+    </div>
+
+    <hr>
+
+    <div class="section-header">
+      <span class="section-title">Lowongan Saya</span>
+    </div>
+    <div id="daftarPekerjaan">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        Memuat data lowongan...
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="section-header">
+      <span class="section-title">Lamaran Masuk</span>
+    </div>
+    <div id="daftarLamaran">
+      <div class="loading-state">
+        <div class="spinner"></div>
+        Memuat lamaran...
+      </div>
+    </div>
+  </div>
+  </main>
+
+  <script src="js/client.js"></script>
+</body>
+</html>
