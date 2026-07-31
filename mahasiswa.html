@@ -4,7 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard Mahasiswa — SkillHub</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%232563eb'/%3E%3Ctext x='50' y='68' font-size='58' font-family='Arial,sans-serif' font-weight='700' fill='white' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/style.css?v=20260608">
+  <script>
+    (function () {
+      var stored = localStorage.getItem('theme');
+      var theme = stored || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+  </script>
 </head>
 <body>
 
@@ -12,6 +20,10 @@
     <span class="navbar-brand">Skill<span>Hub</span></span>
     <div class="navbar-user">
       <span class="navbar-greeting">Hai, <strong id="namaPanggilan">Mahasiswa</strong></span>
+      <button id="themeToggle" class="theme-toggle" aria-label="Ganti tema" title="Ganti tema">
+        <span class="icon-sun">☀️</span>
+        <span class="icon-moon">🌙</span>
+      </button>
       <button onclick="logout()" class="btn btn-ghost btn-sm">Keluar</button>
     </div>
   </nav>
@@ -41,6 +53,14 @@
     <div class="section-header">
       <span class="section-title">Lowongan Tersedia</span>
     </div>
+    <div class="toolbar">
+      <input type="search" id="searchLoker" class="search-input" placeholder="Cari judul atau deskripsi pekerjaan...">
+      <select id="filterStatusLoker" class="filter-select">
+        <option value="semua">Semua Status</option>
+        <option value="dibuka">Buka</option>
+        <option value="ditutup">Tutup</option>
+      </select>
+    </div>
     <div id="daftarLoker">
       <div class="loading-state">
         <div class="spinner"></div>
@@ -62,6 +82,8 @@
   </div>
   </main>
 
-  <script src="js/mahasiswa.js"></script>
+  <script src="js/ui-helpers.js?v=20260731"></script>
+  <script src="js/theme.js?v=20260731"></script>
+  <script src="js/mahasiswa.js?v=20260731"></script>
 </body>
 </html>

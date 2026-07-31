@@ -1,4 +1,4 @@
-﻿const namaUser = localStorage.getItem('nama_lengkap');
+const namaUser = localStorage.getItem('nama_lengkap');
 if (namaUser) {
   document.getElementById('namaPanggilan').textContent = namaUser;
 }
@@ -9,55 +9,102 @@ if (localStorage.getItem('role') !== 'mahasiswa') {
 }
 
 const logout = () => {
-  localStorage.clear();
-  window.location.href = 'index.html';
+  fetch('api/logout.php', { method: 'POST' })
+    .finally(() => {
+      localStorage.clear();
+      window.location.href = 'index.html';
+    });
 };
 
-const renderEmptyState = (message) => `
-  <div class="empty-state">
-    <p>${message}</p>
-  </div>
-`;
+const formatLokerStatus = (status) => {
+  const normalized = String(status || '').toLowerCase();
+  if (normalized === 'dibuka') return '<span class="badge badge-success">DIBUKA</span>';
+  if (normalized === 'ditutup') return '<span class="badge badge-warning">DITUTUP</span>';
+  if (normalized === 'selesai') return '<span class="badge badge-info">SELESAI</span>';
+  return `<span class="badge badge-primary">${escapeHtml((status || 'UNKNOWN').toUpperCase())}</span>`;
+};
+
+let semuaLoker = [];
+
+const renderLoker = (jobs) => {
+  const wadah = document.getElementById('daftarLoker');
+
+  if (!Array.isArray(jobs) || jobs.length === 0) {
+    const noDataAtAll = semuaLoker.length === 0;
+    wadah.innerHTML = noDataAtAll
+      ? renderEmptyState('Belum ada lowongan yang tersedia.', '💼')
+      : renderEmptyState('Tidak ada lowongan yang cocok dengan pencarianmu.', '🔍');
+    return;
+  }
+
+  wadah.innerHTML = jobs.map((job, index) => {
+    const applied = Boolean(job.id_lamaran);
+    const isOpen = String(job.status_loker || '').toLowerCase() === 'dibuka';
+    const badgeClass = applied ? 'badge-info' : 'badge-primary';
+    const badgeText = applied ? 'TERDAFTAR' : 'TERSEDIA';
+
+    let actionHtml;
+    if (applied) {
+      actionHtml = `<button disabled class="btn btn-ghost btn-sm">Sudah Dilamar</button>`;
+    } else if (!isOpen) {
+      actionHtml = `<button disabled class="btn btn-ghost btn-sm">Lowongan Ditutup</button>`;
+    } else {
+      actionHtml = `<button class="btn btn-success btn-sm" onclick="siapkanLamaran(${job.id_pekerjaan})">Lamar Sekarang</button>`;
+    }
+
+    return `
+      <div class="job-card animate-in" style="animation-delay: ${Math.min(index, 8) * 60}ms">
+        <div class="job-card-header">
+          <div>
+            <h4 class="job-card-title">${escapeHtml(job.judul_pekerjaan)}</h4>
+            <p class="job-card-desc">${escapeHtml(job.deskripsi)}</p>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+            ${formatLokerStatus(job.status_loker)}
+            ${applied ? `<span class="badge ${badgeClass}">${badgeText}</span>` : ''}
+          </div>
+        </div>
+        <div class="job-card-actions">${actionHtml}</div>
+      </div>
+    `;
+  }).join('');
+};
+
+const applyLokerFilter = () => {
+  const keyword = (document.getElementById('searchLoker').value || '').trim().toLowerCase();
+  const statusFilter = document.getElementById('filterStatusLoker').value;
+
+  const filtered = semuaLoker.filter(job => {
+    const matchesKeyword = !keyword
+      || String(job.judul_pekerjaan || '').toLowerCase().includes(keyword)
+      || String(job.deskripsi || '').toLowerCase().includes(keyword);
+
+    const matchesStatus = statusFilter === 'semua'
+      || String(job.status_loker || '').toLowerCase() === statusFilter;
+
+    return matchesKeyword && matchesStatus;
+  });
+
+  renderLoker(filtered);
+};
 
 const loadLoker = () => {
   const wadah = document.getElementById('daftarLoker');
-  const idMahasiswa = localStorage.getItem('id_user');
+  wadah.innerHTML = renderSkeletonCards(3);
 
-  fetch(`api/get_semua_pekerjaan.php?id_mahasiswa=${idMahasiswa}`)
+  fetch('api/get_semua_pekerjaan.php')
     .then(response => response.json())
     .then(data => {
-      if (!Array.isArray(data) || data.length === 0) {
-        wadah.innerHTML = renderEmptyState('Belum ada lowongan yang buka.');
-        return;
-      }
-
-      wadah.innerHTML = data.map(job => {
-        const applied = Boolean(job.id_lamaran);
-        const badgeClass = applied ? 'badge-info' : 'badge-primary';
-        const badgeText = applied ? 'TERDAFTAR' : 'TERSEDIA';
-
-        return `
-          <div class="job-card">
-            <div class="job-card-header">
-              <div>
-                <h4 class="job-card-title">${job.judul_pekerjaan}</h4>
-                <p class="job-card-desc">${job.deskripsi}</p>
-              </div>
-              <span class="badge ${badgeClass}">${badgeText}</span>
-            </div>
-            <div class="job-card-actions">
-              <button ${applied ? 'disabled' : ''} class="${applied ? 'btn btn-ghost' : 'btn btn-success'} btn-sm" ${applied ? '' : `onclick="siapkanLamaran(${job.id_pekerjaan})"`}>
-                ${applied ? 'Sudah Dilamar' : 'Lamar Sekarang'}
-              </button>
-            </div>
-          </div>
-        `;
-      }).join('');
+      semuaLoker = Array.isArray(data) ? data : [];
+      applyLokerFilter();
     })
     .catch(() => {
-      document.getElementById('daftarLoker').innerHTML = renderEmptyState('Gagal memuat lowongan.');
+      wadah.innerHTML = renderErrorState('Gagal memuat lowongan. Coba muat ulang halaman.');
     });
 };
+
+document.getElementById('searchLoker').addEventListener('input', debounce(applyLokerFilter, 250));
+document.getElementById('filterStatusLoker').addEventListener('change', applyLokerFilter);
 
 const siapkanLamaran = (id_pekerjaan) => {
   document.getElementById('wadahLamar').classList.add('active');
@@ -73,10 +120,12 @@ const batalLamar = () => {
 document.getElementById('formLamarKerja').addEventListener('submit', function (e) {
   e.preventDefault();
 
+  const submitBtn = e.target.querySelector('button[type="submit"]');
   const dataKirim = new FormData();
   dataKirim.append('id_pekerjaan', document.getElementById('lamar_id_pekerjaan').value);
   dataKirim.append('pesan_pelamar', document.getElementById('pesan_pelamar').value.trim());
-  dataKirim.append('id_mahasiswa', localStorage.getItem('id_user'));
+
+  setButtonLoading(submitBtn, true, 'Mengirim...');
 
   fetch('api/lamar_pekerjaan.php', {
     method: 'POST',
@@ -84,13 +133,15 @@ document.getElementById('formLamarKerja').addEventListener('submit', function (e
   })
     .then(response => response.json())
     .then(data => {
-      alert(data.pesan);
+      showToast(data.pesan, data.status === 'sukses' ? 'success' : 'error');
       if (data.status === 'sukses') {
         batalLamar();
         loadLoker();
+        loadHistoryLamaran();
       }
     })
-    .catch(() => alert('Gagal mengirim lamaran.'));
+    .catch(() => showToast('Gagal mengirim lamaran.', 'error'))
+    .finally(() => setButtonLoading(submitBtn, false));
 });
 
 const formatStatusBadge = (status) => {
@@ -101,22 +152,22 @@ const formatStatusBadge = (status) => {
 };
 
 const loadHistoryLamaran = () => {
-  const idMahasiswa = localStorage.getItem('id_user');
   const wadah = document.getElementById('statusLamaran');
+  wadah.innerHTML = renderSkeletonCards(2);
 
-  fetch(`api/get_lamaran_mahasiswa.php?id_mahasiswa=${idMahasiswa}`)
+  fetch('api/get_lamaran_mahasiswa.php')
     .then(response => response.json())
     .then(data => {
       if (!Array.isArray(data) || data.length === 0) {
-        wadah.innerHTML = renderEmptyState('Kamu belum melamar pekerjaan apapun.');
+        wadah.innerHTML = renderEmptyState('Kamu belum melamar pekerjaan apapun.', '📝');
         return;
       }
 
-      wadah.innerHTML = data.map(item => `
-        <div class="job-card">
+      wadah.innerHTML = data.map((item, index) => `
+        <div class="job-card animate-in" style="animation-delay: ${Math.min(index, 8) * 60}ms">
           <div class="job-card-header">
             <div>
-              <h4 class="job-card-title">${item.judul_pekerjaan}</h4>
+              <h4 class="job-card-title">${escapeHtml(item.judul_pekerjaan)}</h4>
               <p class="job-card-meta">Status lamaran kamu</p>
             </div>
             ${formatStatusBadge(item.status_lamaran)}
@@ -126,7 +177,7 @@ const loadHistoryLamaran = () => {
       `).join('');
     })
     .catch(() => {
-      wadah.innerHTML = renderEmptyState('Gagal memuat status lamaran.');
+      wadah.innerHTML = renderErrorState('Gagal memuat status lamaran.');
     });
 };
 

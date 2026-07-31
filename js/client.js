@@ -4,8 +4,11 @@ if (namaUser) {
 }
 
 const logout = () => {
-  localStorage.clear();
-  window.location.href = 'index.html';
+  fetch('api/logout.php', { method: 'POST' })
+    .finally(() => {
+      localStorage.clear();
+      window.location.href = 'index.html';
+    });
 };
 
 if (localStorage.getItem('role') !== 'client') {
@@ -13,27 +16,39 @@ if (localStorage.getItem('role') !== 'client') {
   window.location.href = 'index.html';
 }
 
-const setFeedback = (message, isSuccess = true) => {
-  const pesanEl = document.getElementById('pesanClient');
-  pesanEl.textContent = message;
-  pesanEl.style.color = isSuccess ? 'var(--success)' : 'var(--danger)';
-};
-
-const formatJobStatus = (status) => {
+const formatLokerStatus = (status) => {
   const normalized = String(status || '').toLowerCase();
-  if (normalized === 'menunggu') return '<span class="badge badge-warning">MENUNGGU</span>';
-  if (normalized === 'diterima') return '<span class="badge badge-success">DITERIMA</span>';
-  if (normalized === 'ditolak') return '<span class="badge badge-danger">DITOLAK</span>';
-  return `<span class="badge badge-primary">${status || 'UNKNOWN'}</span>`;
+  if (normalized === 'dibuka') return '<span class="badge badge-success">DIBUKA</span>';
+  if (normalized === 'ditutup') return '<span class="badge badge-warning">DITUTUP</span>';
+  if (normalized === 'selesai') return '<span class="badge badge-info">SELESAI</span>';
+  return `<span class="badge badge-primary">${escapeHtml((status || 'UNKNOWN').toUpperCase())}</span>`;
 };
 
 document.getElementById('formTambahKerja').addEventListener('submit', function (e) {
   e.preventDefault();
 
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const judul = document.getElementById('judul_pekerjaan');
+  const deskripsi = document.getElementById('deskripsi');
+  clearFieldError(judul);
+  clearFieldError(deskripsi);
+
+  let valid = true;
+  if (judul.value.trim().length < 3) {
+    showFieldError(judul, 'Judul minimal 3 karakter.');
+    valid = false;
+  }
+  if (deskripsi.value.trim().length < 10) {
+    showFieldError(deskripsi, 'Deskripsi minimal 10 karakter.');
+    valid = false;
+  }
+  if (!valid) return;
+
   const dataKirim = new FormData();
-  dataKirim.append('judul_pekerjaan', document.getElementById('judul_pekerjaan').value.trim());
-  dataKirim.append('deskripsi', document.getElementById('deskripsi').value.trim());
-  dataKirim.append('id_client', localStorage.getItem('id_user'));
+  dataKirim.append('judul_pekerjaan', judul.value.trim());
+  dataKirim.append('deskripsi', deskripsi.value.trim());
+
+  setButtonLoading(submitBtn, true, 'Memposting...');
 
   fetch('api/tambah_pekerjaan.php', {
     method: 'POST',
@@ -41,45 +56,46 @@ document.getElementById('formTambahKerja').addEventListener('submit', function (
   })
     .then(response => response.json())
     .then(data => {
-      setFeedback(data.pesan, data.status === 'sukses');
+      showToast(data.pesan, data.status === 'sukses' ? 'success' : 'error');
       if (data.status === 'sukses') {
         document.getElementById('formTambahKerja').reset();
         loadPekerjaan();
       }
     })
-    .catch(() => setFeedback('Terjadi kesalahan saat menambahkan pekerjaan.', false));
+    .catch(() => showToast('Terjadi kesalahan saat menambahkan pekerjaan.', 'error'))
+    .finally(() => setButtonLoading(submitBtn, false));
 });
 
 const loadPekerjaan = () => {
-  const idClient = localStorage.getItem('id_user');
   const wadah = document.getElementById('daftarPekerjaan');
+  wadah.innerHTML = renderSkeletonCards(3);
 
-  fetch(`api/get_pekerjaan_client.php?id_client=${idClient}`)
+  fetch('api/get_pekerjaan_client.php')
     .then(response => response.json())
     .then(data => {
       if (!Array.isArray(data) || data.length === 0) {
-        wadah.innerHTML = '<div class="empty-state"><p>Belum ada pekerjaan yang diposting.</p></div>';
+        wadah.innerHTML = renderEmptyState('Belum ada pekerjaan yang diposting.', '💼');
         return;
       }
 
-      wadah.innerHTML = data.map(job => `
-        <div class="job-card">
+      wadah.innerHTML = data.map((job, index) => `
+        <div class="job-card animate-in" style="animation-delay: ${Math.min(index, 8) * 60}ms">
           <div class="job-card-header">
             <div>
-              <h4 class="job-card-title">${job.judul_pekerjaan}</h4>
-              <p class="job-card-desc">${job.deskripsi}</p>
+              <h4 class="job-card-title">${escapeHtml(job.judul_pekerjaan)}</h4>
+              <p class="job-card-desc">${escapeHtml(job.deskripsi)}</p>
             </div>
-            ${formatJobStatus(job.status_loker)}
+            ${formatLokerStatus(job.status_loker)}
           </div>
           <div class="job-card-actions">
             <button class="btn btn-danger btn-sm" onclick="hapusPekerjaan(${job.id_pekerjaan})">Hapus</button>
-            <button class="btn btn-warning btn-sm" onclick="siapkanEdit(${job.id_pekerjaan}, ${JSON.stringify(job.judul_pekerjaan)}, ${JSON.stringify(job.deskripsi)})">Edit</button>
+            <button class="btn btn-warning btn-sm" onclick="siapkanEdit(${job.id_pekerjaan}, ${escapeHtml(JSON.stringify(job.judul_pekerjaan))}, ${escapeHtml(JSON.stringify(job.deskripsi))})">Edit</button>
           </div>
         </div>
       `).join('');
     })
     .catch(() => {
-      wadah.innerHTML = '<div class="empty-state"><p>Gagal memuat data.</p></div>';
+      wadah.innerHTML = renderErrorState('Gagal memuat data lowongan.');
     });
 };
 
@@ -88,7 +104,6 @@ const hapusPekerjaan = (id_pekerjaan) => {
 
   const dataKirim = new FormData();
   dataKirim.append('id_pekerjaan', id_pekerjaan);
-  dataKirim.append('id_client', localStorage.getItem('id_user'));
 
   fetch('api/hapus_pekerjaan.php', {
     method: 'POST',
@@ -96,10 +111,10 @@ const hapusPekerjaan = (id_pekerjaan) => {
   })
     .then(response => response.json())
     .then(data => {
-      alert(data.pesan);
+      showToast(data.pesan, data.status === 'sukses' ? 'success' : 'error');
       if (data.status === 'sukses') loadPekerjaan();
     })
-    .catch(() => alert('Gagal menghapus pekerjaan.'));
+    .catch(() => showToast('Gagal menghapus pekerjaan.', 'error'));
 };
 
 const siapkanEdit = (id, judul, deskripsi) => {
@@ -118,11 +133,13 @@ const batalEdit = () => {
 document.getElementById('formEditPekerjaan').addEventListener('submit', function (e) {
   e.preventDefault();
 
+  const submitBtn = e.target.querySelector('button[type="submit"]');
   const dataKirim = new FormData();
   dataKirim.append('id_pekerjaan', document.getElementById('edit_id_pekerjaan').value);
-  dataKirim.append('id_client', localStorage.getItem('id_user'));
   dataKirim.append('judul_pekerjaan', document.getElementById('edit_judul_pekerjaan').value.trim());
   dataKirim.append('deskripsi', document.getElementById('edit_deskripsi').value.trim());
+
+  setButtonLoading(submitBtn, true, 'Menyimpan...');
 
   fetch('api/edit_pekerjaan.php', {
     method: 'POST',
@@ -130,53 +147,82 @@ document.getElementById('formEditPekerjaan').addEventListener('submit', function
   })
     .then(response => response.json())
     .then(data => {
-      alert(data.pesan);
+      showToast(data.pesan, data.status === 'sukses' ? 'success' : 'error');
       if (data.status === 'sukses') {
         batalEdit();
         loadPekerjaan();
       }
     })
-    .catch(() => alert('Gagal memperbarui pekerjaan.'));
+    .catch(() => showToast('Gagal memperbarui pekerjaan.', 'error'))
+    .finally(() => setButtonLoading(submitBtn, false));
 });
 
-const loadLamaran = () => {
-  const idClient = localStorage.getItem('id_user');
+let semuaLamaran = [];
+
+const renderLamaran = (list) => {
   const wadahLamaran = document.getElementById('daftarLamaran');
 
-  fetch(`api/get_lamaran_client.php?id_client=${idClient}`)
+  if (!Array.isArray(list) || list.length === 0) {
+    const noDataAtAll = semuaLamaran.length === 0;
+    wadahLamaran.innerHTML = noDataAtAll
+      ? renderEmptyState('Belum ada mahasiswa yang melamar.', '📭')
+      : renderEmptyState('Tidak ada lamaran yang cocok dengan pencarianmu.', '🔍');
+    return;
+  }
+
+  wadahLamaran.innerHTML = list.map((lamar, index) => {
+    const statusClass = lamar.status_lamaran === 'menunggu' ? 'badge-warning' : lamar.status_lamaran === 'diterima' ? 'badge-success' : 'badge-danger';
+    const actions = lamar.status_lamaran === 'menunggu'
+      ? `<button class="btn btn-success btn-sm" onclick="ubahStatusLamaran(${lamar.id_lamaran}, 'diterima')">Terima</button>
+         <button class="btn btn-danger btn-sm" onclick="ubahStatusLamaran(${lamar.id_lamaran}, 'ditolak')">Tolak</button>`
+      : '';
+
+    return `
+      <div class="applicant-card animate-in" style="animation-delay: ${Math.min(index, 8) * 60}ms">
+        <div class="card-header">
+          <div>
+            <h4 class="card-title">${escapeHtml(lamar.judul_pekerjaan)}</h4>
+            <p class="card-meta">${escapeHtml(lamar.nama_pelamar)} · ${escapeHtml(lamar.email_pelamar)}</p>
+          </div>
+          <span class="badge ${statusClass}">${escapeHtml(lamar.status_lamaran.toUpperCase())}</span>
+        </div>
+        <div class="applicant-message">${escapeHtml(lamar.pesan_pelamar)}</div>
+        <div class="job-card-actions">${actions}</div>
+      </div>
+    `;
+  }).join('');
+};
+
+const applyLamaranFilter = () => {
+  const keyword = (document.getElementById('searchLamaran').value || '').trim().toLowerCase();
+  const statusFilter = document.getElementById('filterStatusLamaran').value;
+
+  const filtered = semuaLamaran.filter(lamar => {
+    const matchesKeyword = !keyword || String(lamar.nama_pelamar || '').toLowerCase().includes(keyword);
+    const matchesStatus = statusFilter === 'semua' || lamar.status_lamaran === statusFilter;
+    return matchesKeyword && matchesStatus;
+  });
+
+  renderLamaran(filtered);
+};
+
+const loadLamaran = () => {
+  const wadahLamaran = document.getElementById('daftarLamaran');
+  wadahLamaran.innerHTML = renderSkeletonCards(2);
+
+  fetch('api/get_lamaran_client.php')
     .then(response => response.json())
     .then(data => {
-      if (!Array.isArray(data) || data.length === 0) {
-        wadahLamaran.innerHTML = '<div class="empty-state"><p>Belum ada mahasiswa yang melamar.</p></div>';
-        return;
-      }
-
-      wadahLamaran.innerHTML = data.map(lamar => {
-        const statusClass = lamar.status_lamaran === 'menunggu' ? 'badge-warning' : lamar.status_lamaran === 'diterima' ? 'badge-success' : 'badge-danger';
-        const actions = lamar.status_lamaran === 'menunggu'
-          ? `<button class="btn btn-success btn-sm" onclick="ubahStatusLamaran(${lamar.id_lamaran}, 'diterima')">Terima</button>
-             <button class="btn btn-danger btn-sm" onclick="ubahStatusLamaran(${lamar.id_lamaran}, 'ditolak')">Tolak</button>`
-          : '';
-
-        return `
-          <div class="applicant-card">
-            <div class="card-header">
-              <div>
-                <h4 class="card-title">${lamar.judul_pekerjaan}</h4>
-                <p class="card-meta">${lamar.nama_pelamar} · ${lamar.email_pelamar}</p>
-              </div>
-              <span class="badge ${statusClass}">${lamar.status_lamaran.toUpperCase()}</span>
-            </div>
-            <div class="applicant-message">${lamar.pesan_pelamar}</div>
-            <div class="job-card-actions">${actions}</div>
-          </div>
-        `;
-      }).join('');
+      semuaLamaran = Array.isArray(data) ? data : [];
+      applyLamaranFilter();
     })
     .catch(() => {
-      wadahLamaran.innerHTML = '<div class="empty-state"><p>Gagal memuat lamaran.</p></div>';
+      wadahLamaran.innerHTML = renderErrorState('Gagal memuat lamaran.');
     });
 };
+
+document.getElementById('searchLamaran').addEventListener('input', debounce(applyLamaranFilter, 250));
+document.getElementById('filterStatusLamaran').addEventListener('change', applyLamaranFilter);
 
 loadPekerjaan();
 loadLamaran();
@@ -192,9 +238,11 @@ window.ubahStatusLamaran = function (id_lamaran, status_baru) {
   })
     .then(response => response.json())
     .then(data => {
-      alert(data.pesan);
-      if (data.status === 'sukses') loadPekerjaan();
-loadLamaran();
+      showToast(data.pesan, data.status === 'sukses' ? 'success' : 'error');
+      if (data.status === 'sukses') {
+        loadPekerjaan();
+        loadLamaran();
+      }
     })
-    .catch(() => alert('Gagal memperbarui status lamaran.'));
+    .catch(() => showToast('Gagal memperbarui status lamaran.', 'error'));
 };

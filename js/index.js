@@ -44,19 +44,32 @@ const redirectByRole = (role) => {
 document.getElementById('formLogin').addEventListener('submit', function (e) {
   e.preventDefault();
 
-  const emailUser = document.getElementById('email_login').value.trim();
-  const passwordUser = document.getElementById('password_login').value;
+  const emailInput = document.getElementById('email_login');
+  const passwordInput = document.getElementById('password_login');
+  const emailUser = emailInput.value.trim();
+  const passwordUser = passwordInput.value;
+  const submitBtn = e.target.querySelector('button[type="submit"]');
 
   clearError();
+  clearFieldError(emailInput);
+  clearFieldError(passwordInput);
 
-  if (!emailUser || !passwordUser) {
-    showError('Email dan password harus diisi.');
-    return;
+  let valid = true;
+  if (!emailUser) {
+    showFieldError(emailInput, 'Email wajib diisi.');
+    valid = false;
   }
+  if (!passwordUser) {
+    showFieldError(passwordInput, 'Password wajib diisi.');
+    valid = false;
+  }
+  if (!valid) return;
 
   const dataKirim = new FormData();
   dataKirim.append('email', emailUser);
   dataKirim.append('password', passwordUser);
+
+  setButtonLoading(submitBtn, true, 'Masuk...');
 
   fetch('api/proses_login.php', {
     method: 'POST',
@@ -71,33 +84,59 @@ document.getElementById('formLogin').addEventListener('submit', function (e) {
         redirectByRole(data.role);
       } else {
         showError(data.pesan || 'Email atau password salah.');
+        setButtonLoading(submitBtn, false);
       }
     })
     .catch(() => {
       showError('Terjadi kesalahan jaringan. Silakan coba lagi.');
+      setButtonLoading(submitBtn, false);
     });
 });
 
 document.getElementById('formRegister').addEventListener('submit', function (e) {
   e.preventDefault();
 
-  const namaLengkap = document.getElementById('reg_nama').value.trim();
-  const email = document.getElementById('reg_email').value.trim();
-  const password = document.getElementById('reg_password').value;
+  const namaInput = document.getElementById('reg_nama');
+  const emailInput = document.getElementById('reg_email');
+  const passwordInput = document.getElementById('reg_password');
   const role = document.getElementById('reg_role').value;
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+
+  const namaLengkap = namaInput.value.trim();
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
 
   clearError();
+  [namaInput, emailInput, passwordInput].forEach(clearFieldError);
 
-  if (!namaLengkap || !email || !password) {
-    showError('Semua kolom harus diisi.');
-    return;
+  let valid = true;
+  if (!namaLengkap) {
+    showFieldError(namaInput, 'Nama wajib diisi.');
+    valid = false;
   }
+  if (!email) {
+    showFieldError(emailInput, 'Email wajib diisi.');
+    valid = false;
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showFieldError(emailInput, 'Format email tidak valid.');
+    valid = false;
+  }
+  if (!password) {
+    showFieldError(passwordInput, 'Password wajib diisi.');
+    valid = false;
+  } else if (password.length < 6) {
+    showFieldError(passwordInput, 'Password minimal 6 karakter.');
+    valid = false;
+  }
+  if (!valid) return;
 
   const dataKirim = new FormData();
   dataKirim.append('nama_lengkap', namaLengkap);
   dataKirim.append('email', email);
   dataKirim.append('password', password);
   dataKirim.append('role', role);
+
+  setButtonLoading(submitBtn, true, 'Mendaftar...');
 
   fetch('api/proses_register.php', {
     method: 'POST',
@@ -106,7 +145,7 @@ document.getElementById('formRegister').addEventListener('submit', function (e) 
     .then(response => response.json())
     .then(data => {
       if (data.status === 'sukses') {
-        alert(data.pesan);
+        showToast(data.pesan, 'success');
         document.getElementById('formRegister').reset();
         setActiveTab('login');
       } else {
@@ -115,5 +154,6 @@ document.getElementById('formRegister').addEventListener('submit', function (e) 
     })
     .catch(() => {
       showError('Terjadi kesalahan jaringan. Silakan coba lagi.');
-    });
+    })
+    .finally(() => setButtonLoading(submitBtn, false));
 });

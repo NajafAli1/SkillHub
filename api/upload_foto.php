@@ -1,5 +1,7 @@
 <?php
-require_once '../koneksi.php';
+require_once 'bootstrap.php';
+
+$user = require_login();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(["status" => "gagal", "pesan" => "Metode request tidak valid."]);
@@ -13,7 +15,7 @@ if (!isset($_FILES['foto']) || $_FILES['foto']['error'] !== UPLOAD_ERR_OK) {
 
 $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
 $maxSize = 2 * 1024 * 1024;
-$fileType = $_FILES['foto']['type'];
+$fileType = mime_content_type($_FILES['foto']['tmp_name']);
 $fileSize = $_FILES['foto']['size'];
 
 if (!in_array($fileType, $allowedTypes, true)) {
@@ -34,7 +36,8 @@ if ($uploadDir === false) {
     }
 }
 
-$extension = strtolower(pathinfo($_FILES['foto']['name'], PATHINFO_EXTENSION));
+$extensionMap = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif'];
+$extension = $extensionMap[$fileType];
 $filename = uniqid('foto_', true) . '.' . $extension;
 $destination = $uploadDir . DIRECTORY_SEPARATOR . $filename;
 
@@ -46,4 +49,3 @@ if (!move_uploaded_file($_FILES['foto']['tmp_name'], $destination)) {
 $publicPath = 'uploads/' . $filename;
 
 echo json_encode(["status" => "sukses", "pesan" => "Upload foto berhasil.", "filename" => $publicPath]);
-?>

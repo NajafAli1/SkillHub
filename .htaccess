@@ -1,0 +1,10 @@
+# Blokir akses langsung ke folder .git — kalau ada riwayat git di dalam
+# folder yang di-serve Apache, ini mencegah orang mendownload .git/HEAD,
+# .git/config, dan seluruh riwayat commit (termasuk kode versi lama) lewat browser.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule "(^|/)\.git" - [F,L]
+</IfModule>
+
+# Cegah listing isi folder kalau tidak ada index file.
+Options -Indexes
