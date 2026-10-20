@@ -5,65 +5,50 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
 import { login, type AuthActionState } from '@/app/auth/actions'
+import { FieldError, FormMessage, Label, SubmitButton, inputClass, submitWithoutReset } from '@/components/ui/form'
 
 const initialState: AuthActionState = null
 
 function LoginForm() {
   const searchParams = useSearchParams()
   const next = searchParams.get('next') ?? ''
+  // Teks dari URL tidak ditampilkan apa adanya supaya link tidak bisa dipakai
+  // untuk menyisipkan pesan palsu.
+  const callbackError = searchParams.has('error')
+    ? 'Tautan konfirmasi tidak valid atau sudah kedaluwarsa. Silakan masuk atau daftar ulang.'
+    : undefined
   const [state, formAction, pending] = useActionState(login, initialState)
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={submitWithoutReset(formAction)} className="space-y-4">
       <input type="hidden" name="next" value={next} />
 
+      <FormMessage error={state?.error ?? (state ? undefined : callbackError)} />
+
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
-        />
-        {state?.fieldErrors?.email && (
-          <p className="mt-1 text-sm text-red-600">{state.fieldErrors.email[0]}</p>
-        )}
+        <Label htmlFor="email">Email</Label>
+        <input id="email" name="email" type="email" required autoComplete="email" className={inputClass} />
+        <FieldError errors={state?.fieldErrors?.email} />
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-          Password
-        </label>
+        <Label htmlFor="password">Password</Label>
         <input
           id="password"
           name="password"
           type="password"
           required
           autoComplete="current-password"
-          className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-gray-500 focus:outline-none"
+          className={inputClass}
         />
-        {state?.fieldErrors?.password && (
-          <p className="mt-1 text-sm text-red-600">{state.fieldErrors.password[0]}</p>
-        )}
+        <FieldError errors={state?.fieldErrors?.password} />
       </div>
 
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      <SubmitButton pending={pending} pendingText="Masuk..." className="w-full">Masuk</SubmitButton>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50"
-      >
-        {pending ? 'Masuk...' : 'Masuk'}
-      </button>
-
-      <p className="text-center text-sm text-gray-600">
+      <p className="text-center text-sm text-on-surface-variant">
         Belum punya akun?{' '}
-        <Link href="/auth/register" className="font-medium text-gray-900 underline">
+        <Link href="/auth/register" className="font-semibold text-primary hover:underline">
           Daftar
         </Link>
       </p>
@@ -73,11 +58,12 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-4">
-      <h1 className="mb-6 text-center text-2xl font-semibold text-gray-900">Masuk ke SkillHub</h1>
+    <>
+      <h1 className="text-2xl font-bold text-on-surface">Masuk ke SkillHub</h1>
+      <p className="mb-6 mt-1 text-sm text-on-surface-variant">Lanjutkan proyek dan lamaranmu.</p>
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>
-    </main>
+    </>
   )
 }

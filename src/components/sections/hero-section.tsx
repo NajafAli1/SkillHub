@@ -1,71 +1,81 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { FaSearch, FaArrowUp } from 'react-icons/fa'
-import { MdVerified, MdGridView, MdDesignServices, MdTrendingUp } from 'react-icons/md'
+import { FaSearch } from 'react-icons/fa'
+import { MdVerified, MdGridView } from 'react-icons/md'
 
-export function HeroSection() {
+import type { Category } from '@/lib/queries/jobs'
+
+const POPULAR_SEARCHES = ['Logo', 'Landing Page', 'Artikel', 'Video Editing']
+
+export function HeroSection({ categories }: { categories: Category[] }) {
   return (
-    <section className="bg-surface w-full pt-16 pb-12 px-4 md:px-8 lg:px-12 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto flex flex-col items-center text-center relative z-10">
-        
-        {/* Header Content */}
-        <div className="flex flex-col gap-6 max-w-3xl items-center">
-          {/* Badge Welcome */}
-          <span className="bg-surface-variant text-on-surface-variant px-4 py-1.5 rounded-full text-sm font-medium flex items-center gap-2 shadow-sm">
-            <MdVerified className="text-[#00623f] text-lg" /> Selamat Datang di SkillHub
+    <section className="relative w-full overflow-hidden bg-surface px-4 pb-12 pt-10 sm:px-6 md:pt-16 lg:px-12">
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col items-center text-center">
+        <div className="flex max-w-3xl flex-col items-center gap-5 md:gap-6">
+          <span className="flex items-center gap-2 rounded-full bg-surface-variant px-4 py-1.5 text-xs font-medium text-on-surface-variant shadow-sm sm:text-sm">
+            <MdVerified className="text-lg text-primary" /> Selamat Datang di SkillHub
           </span>
 
-          {/* Headline Utama */}
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-[#00623f] leading-tight tracking-tight">
+          <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-primary sm:text-4xl md:text-5xl lg:text-6xl">
             Kerja lepas pertama, mulai dari sini
           </h1>
 
-          {/* Subheadline */}
-          <p className="text-base md:text-lg text-on-surface-variant max-w-2xl leading-relaxed">
-            Platform yang menghubungkan mahasiswa berbakat dengan klien untuk proyek freelance yang bermakna. Bangun portofolio Anda sambil kuliah.
+          <p className="max-w-2xl text-base leading-relaxed text-on-surface-variant md:text-lg">
+            Platform yang menghubungkan mahasiswa berbakat dengan klien untuk proyek freelance yang bermakna.
+            Bangun portofolio sambil kuliah.
           </p>
 
-          {/* Search Box Pill */}
-          <div className="bg-surface-container-lowest shadow-lg border border-outline-variant rounded-full p-2 flex flex-col md:flex-row gap-2 mt-4 w-full max-w-2xl">
-            {/* Input Keyword */}
-            <div className="flex-1 flex items-center px-4 py-2 bg-transparent">
-              <FaSearch className="text-outline mr-3 shrink-0" />
+          <form
+            action="/jobs"
+            method="get"
+            role="search"
+            className="mt-2 flex w-full max-w-2xl flex-col gap-2 rounded-2xl border border-outline-variant bg-surface-container-lowest p-2 shadow-lg md:flex-row md:rounded-full"
+          >
+            <label className="flex flex-1 items-center px-4 py-2">
+              <FaSearch className="mr-3 shrink-0 text-outline" />
+              <span className="sr-only">Kata kunci</span>
               <input
-                type="text"
+                type="search"
+                name="q"
                 placeholder="Cari skill atau judul proyek..."
-                className="w-full border-none outline-none bg-transparent text-sm text-on-surface placeholder:text-outline-variant focus:ring-0"
+                className="w-full border-none bg-transparent text-sm text-on-surface outline-none placeholder:text-outline"
               />
-            </div>
+            </label>
 
-            {/* Separator Divider */}
-            <div className="w-px h-8 bg-outline-variant hidden md:block self-center"></div>
+            <div className="hidden h-8 w-px self-center bg-outline-variant md:block"></div>
+            <div className="h-px bg-outline-variant/60 md:hidden"></div>
 
-            {/* Dropdown Kategori */}
-            <div className="flex-1 flex items-center px-4 py-2 bg-transparent">
-              <MdGridView className="text-outline mr-3 text-lg shrink-0" />
-              <select className="w-full border-none outline-none bg-transparent text-sm text-on-surface focus:ring-0 appearance-none cursor-pointer">
+            <label className="flex flex-1 items-center px-4 py-2">
+              <MdGridView className="mr-3 shrink-0 text-lg text-outline" />
+              <span className="sr-only">Kategori</span>
+              <select
+                name="category"
+                defaultValue=""
+                className="w-full cursor-pointer appearance-none border-none bg-transparent text-sm text-on-surface outline-none"
+              >
                 <option value="">Semua Kategori</option>
-                <option value="design">Desain Grafis</option>
-                <option value="web">Web Development</option>
-                <option value="writing">Penulisan</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.slug}>{cat.name}</option>
+                ))}
               </select>
-            </div>
+            </label>
 
-            {/* Button Cari */}
-            <button className="bg-primary-container text-white px-8 py-3 rounded-full text-sm font-semibold hover:bg-tertiary transition-colors flex items-center justify-center gap-2 shadow-sm shrink-0">
+            <button
+              type="submit"
+              className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-primary-container px-8 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary md:rounded-full"
+            >
               <FaSearch />
               Cari
             </button>
-          </div>
+          </form>
 
-          {/* Popular Tags */}
-          <div className="flex items-center justify-center gap-2 mt-2 flex-wrap text-xs">
-            <span className="text-on-surface-variant font-medium">Populer:</span>
-            {['Logo Design', 'Web Landing Page', 'Artikel SEO'].map((tag) => (
+          <div className="mt-1 flex flex-wrap items-center justify-center gap-2 text-xs">
+            <span className="font-medium text-on-surface-variant">Populer:</span>
+            {POPULAR_SEARCHES.map((tag) => (
               <Link
                 key={tag}
-                href={`/jobs?search=${encodeURIComponent(tag)}`}
-                className="bg-surface-container text-on-surface-variant border border-outline-variant px-3 py-1 rounded-full hover:bg-surface-variant transition-colors"
+                href={`/jobs?q=${encodeURIComponent(tag)}`}
+                className="rounded-full border border-outline-variant bg-surface-container px-3 py-1 text-on-surface-variant transition-colors hover:bg-surface-variant"
               >
                 {tag}
               </Link>
@@ -73,58 +83,18 @@ export function HeroSection() {
           </div>
         </div>
 
-        {/* Hero Image & Floating Cards */}
-        <div className="w-full flex justify-center items-end mt-10 relative max-w-4xl">
-          {/* Gambar Hero Mahasiswa Bekerja */}
+        <div className="mt-10 flex w-full max-w-2xl justify-center">
           <Image
             src="/assets/ilustator/ilustrasi.png"
-            alt="Mahasiswa bekerja lepas di cafe"
+            alt="Mahasiswa bekerja lepas di kafe"
             width={800}
             height={500}
-            className="w-full max-w-2xl object-contain relative z-10 rounded-2xl"
-            priority
-            unoptimized
+            sizes="(max-width: 768px) 100vw, 672px"
+            className="h-auto w-full rounded-2xl object-contain"
+            loading="eager"
+            fetchPriority="high"
           />
-
-          {/* Floating Card Kiri (Desain Grafis) */}
-          <div className="absolute left-0 top-1/4 bg-surface-container-lowest p-4 rounded-2xl shadow-xl border border-outline-variant hidden lg:flex flex-col gap-2 z-20 text-left min-w-[200px]">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary-container text-white p-2.5 rounded-full flex items-center justify-center">
-                <MdDesignServices className="text-xl" />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-on-background">Desain Grafis</p>
-                <p className="text-xs text-on-surface-variant">Kategori Teratas</p>
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-4 mt-2">
-              <div className="flex flex-col">
-                <span className="text-xs text-outline">Proyek Selesai</span>
-                <span className="text-lg font-bold text-on-background">1,248</span>
-              </div>
-              <div className="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-md text-xs font-bold">
-                +12%
-              </div>
-            </div>
-          </div>
-
-          {/* Floating Card Kanan (Klien Aktif) */}
-          <div className="absolute right-0 bottom-1/4 bg-surface-container-lowest p-4 rounded-2xl shadow-xl border border-outline-variant hidden lg:flex flex-col gap-2 z-20 text-left min-w-[180px]">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-on-background">Klien Aktif</span>
-                <MdTrendingUp className="text-primary text-xl" />
-              </div>
-              <span className="text-2xl font-bold text-on-background">3,592</span>
-              <div className="flex items-center gap-1 text-primary">
-                <FaArrowUp className="text-xs" />
-                <span className="text-xs font-bold">8.4% minggu ini</span>
-              </div>
-            </div>
-          </div>
-
         </div>
-
       </div>
     </section>
   )

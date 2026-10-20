@@ -1,44 +1,47 @@
 import Link from 'next/link'
 
-export function CategoryGrid() {
-  const categories = [
-    { name: 'Desain & Grafis', count: '320 lowongan', icon: '🎨' },
-    { name: 'Web & App Dev', count: '240 lowongan', icon: '💻' },
-    { name: 'Penulisan & Penerjemahan', count: '180 lowongan', icon: '✍️' },
-    { name: 'Digital Marketing', count: '150 lowongan', icon: '📈' },
-    { name: 'Video & Animasi', count: '110 lowongan', icon: '🎬' },
-    { name: 'Fotografi & Edit', count: '95 lowongan', icon: '📷' },
-    { name: 'Data Entry & Virtual Asst', count: '130 lowongan', icon: '📋' },
-    { name: 'Tugas Kuliah & Riset', count: '75 lowongan', icon: '📚' },
-  ]
+import type { Category } from '@/lib/queries/jobs'
+
+const ICONS: Record<string, string> = {
+  'desain-grafis': '🎨',
+  'web-app-dev': '💻',
+  penulisan: '✍️',
+  'digital-marketing': '📈',
+  'video-animasi': '🎬',
+  fotografi: '📷',
+  'data-entry': '📋',
+  'riset-data': '📊',
+}
+
+export function CategoryGrid({ categories }: { categories: (Category & { openJobs: number })[] }) {
+  if (categories.length === 0) return null
 
   return (
-    <section id="kategori" className="py-20 bg-[#fafbf8]">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
-        <div className="flex justify-between items-end mb-12">
-          <div>
-            <h2 className="text-3xl font-bold text-[#161e11]">Jelajahi Kategori Popular</h2>
-            <p className="text-[#3f4942] mt-2">Temukan proyek yang sesuai dengan jurusan dan keahlianmu</p>
-          </div>
-          <Link href="/categories" className="text-sm font-bold text-[#1c7c54] hover:underline hidden sm:block">
-            Lihat Semua Kategori &rarr;
-          </Link>
+    <section id="kategori" className="scroll-mt-20 bg-[#fafbf8] py-14 md:py-20">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-12">
+        <div className="mb-8 md:mb-12">
+          <h2 className="text-2xl font-bold text-on-surface md:text-3xl">Jelajahi Kategori Populer</h2>
+          <p className="mt-2 text-sm text-on-surface-variant md:text-base">
+            Temukan proyek yang sesuai dengan jurusan dan keahlianmu
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-6">
           {categories.map((cat) => (
             <Link
-              key={cat.name}
-              href={`/jobs?category=${encodeURIComponent(cat.name)}`}
-              className="bg-white border border-[#e3e8de] rounded-[12px] p-6 hover:border-[#1c7c54] transition-all group"
+              key={cat.id}
+              href={`/jobs?category=${cat.slug}`}
+              className="group rounded-[12px] border border-border-card bg-white p-4 transition-all hover:border-primary-container sm:p-6"
             >
-              <div className="text-3xl mb-4 group-hover:scale-110 transition-transform inline-block">
-                {cat.icon}
+              <div className="mb-3 inline-block text-2xl transition-transform group-hover:scale-110 sm:mb-4 sm:text-3xl">
+                {ICONS[cat.slug] ?? '🧩'}
               </div>
-              <h3 className="font-bold text-[#161e11] text-base group-hover:text-[#1c7c54] transition-colors">
+              <h3 className="text-sm font-bold leading-snug text-on-surface transition-colors group-hover:text-primary-container sm:text-base">
                 {cat.name}
               </h3>
-              <p className="text-xs text-gray-500 mt-1">{cat.count}</p>
+              <p className="mt-1 text-xs text-gray-500">
+                {cat.openJobs > 0 ? `${cat.openJobs} lowongan` : 'Belum ada lowongan'}
+              </p>
             </Link>
           ))}
         </div>

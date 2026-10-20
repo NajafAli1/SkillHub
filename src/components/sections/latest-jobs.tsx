@@ -1,88 +1,52 @@
 import Link from 'next/link'
-import { JobCard, JobCardProps } from '../ui/job-card'
 
-export function LatestJobs() {
-  const dummyJobs: JobCardProps[] = [
-    {
-      id: '1',
-      companyName: 'Studio Nusantara',
-      isVerified: true,
-      title: 'Redesign UI/UX Mobile App Marketplace Edukasi',
-      budget: 'Rp 2.500.000 - Rp 4.000.000',
-      locationType: 'Remote',
-      skills: ['Figma', 'UI/UX', 'Mobile App'],
-      postedAt: '2 jam lalu',
-    },
-    {
-      id: '2',
-      companyName: 'Kopi Kenangan Tech',
-      isVerified: true,
-      title: 'Frontend Developer Next.js & Tailwind CSS',
-      budget: 'Rp 3.000.000 - Rp 5.000.000',
-      locationType: 'Hybrid',
-      skills: ['Next.js', 'React', 'Tailwind'],
-      postedAt: '4 jam lalu',
-    },
-    {
-      id: '3',
-      companyName: 'Agency Kreatif Media',
-      isVerified: false,
-      title: 'Penulis Artikel Content Marketing (10 Artikel)',
-      budget: 'Rp 1.000.000 - Rp 1.500.000',
-      locationType: 'Remote',
-      skills: ['Copywriting', 'SEO', 'Bahasa Indonesia'],
-      postedAt: '5 jam lalu',
-    },
-    {
-      id: '4',
-      companyName: 'Brand Fashion Lokal',
-      isVerified: true,
-      title: 'Video Editor Reels & TikTok (Kontrak 1 Bulan)',
-      budget: 'Rp 2.000.000 - Rp 3.000.000',
-      locationType: 'Remote',
-      skills: ['CapCut', 'Premiere Pro', 'Social Media'],
-      postedAt: '1 hari lalu',
-    },
-    {
-      id: '5',
-      companyName: 'Startup AgriTech',
-      isVerified: true,
-      title: 'Desain Maskot & Aset Ilustrasi Brand',
-      budget: 'Rp 1.800.000 - Rp 2.500.000',
-      locationType: 'Onsite',
-      skills: ['Illustration', 'Vector', 'Branding'],
-      postedAt: '1 hari lalu',
-    },
-    {
-      id: '6',
-      companyName: 'Lembaga Pelatihan',
-      isVerified: true,
-      title: 'Asisten Data Entry & Visualisasi Dashboard',
-      budget: 'Rp 800.000 - Rp 1.200.000',
-      locationType: 'Remote',
-      skills: ['Excel', 'Google Sheets', 'Data Cleaning'],
-      postedAt: '2 hari lalu',
-    },
-  ]
+import { JobCard } from '../ui/job-card'
+import type { JobSummary } from '@/lib/queries/jobs'
 
+export function LatestJobs({ jobs }: { jobs: JobSummary[] }) {
   return (
-    <section className="py-20 bg-white">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-12">
-        <div className="flex justify-between items-end mb-12">
+    <section className="bg-white py-14 md:py-20">
+      <div className="mx-auto max-w-[1440px] px-4 sm:px-6 lg:px-12">
+        <div className="mb-8 flex items-end justify-between gap-4 md:mb-12">
           <div>
-            <h2 className="text-3xl font-bold text-[#161e11]">Lowongan Terbaru</h2>
-            <p className="text-[#3f4942] mt-2">Daftar proyek freelance terbaru yang diposting oleh klien terverifikasi</p>
+            <h2 className="text-2xl font-bold text-on-surface md:text-3xl">Lowongan Terbaru</h2>
+            <p className="mt-2 text-sm text-on-surface-variant md:text-base">
+              Proyek freelance terbaru yang diposting oleh client
+            </p>
           </div>
-          <Link href="/jobs" className="text-sm font-bold text-[#1c7c54] hover:underline hidden sm:block">
-            Lihat Semua Lowongan &rarr;
-          </Link>
+          {jobs.length > 0 && (
+            <Link href="/jobs" className="hidden shrink-0 text-sm font-bold text-primary-container hover:underline sm:block">
+              Lihat Semua &rarr;
+            </Link>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dummyJobs.map((job) => (
-            <JobCard key={job.id} {...job} />
-          ))}
-        </div>
+        {jobs.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+              {jobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+            <Link
+              href="/jobs"
+              className="mt-6 block rounded-[10px] border border-border-card py-3 text-center text-sm font-bold text-primary-container sm:hidden"
+            >
+              Lihat Semua Lowongan &rarr;
+            </Link>
+          </>
+        ) : (
+          <div className="rounded-[12px] border border-dashed border-outline-variant bg-surface px-6 py-12 text-center">
+            <p className="font-semibold text-on-surface">Belum ada lowongan yang dibuka.</p>
+            <p className="mt-1 text-sm text-on-surface-variant">Jadilah client pertama yang memasang proyek di SkillHub.</p>
+            <Link
+              href="/auth/register?role=client"
+              className="mt-5 inline-block rounded-[10px] bg-primary-container px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary"
+            >
+              Pasang Lowongan
+            </Link>
+          </div>
+        )}
       </div>
     </section>
   )

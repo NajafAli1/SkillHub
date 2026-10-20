@@ -1,6 +1,8 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { z } from 'zod'
 
 import createClient from '@/lib/supabase/server'
 import { dashboardPath } from '@/lib/auth'
@@ -13,6 +15,30 @@ export type AuthActionState = {
   info?: string
 } | null
 
+// Pesan error Supabase Auth berbahasa Inggris; terjemahkan yang umum
+// dan beri pesan generik untuk sisanya.
+function translateAuthError(error: { code?: string; message: string; status?: number }): string {
+  switch (error.code) {
+    case 'invalid_credentials':
+      return 'Email atau password salah.'
+    case 'email_not_confirmed':
+      return 'Email belum dikonfirmasi. Cek kotak masuk email kamu.'
+    case 'user_already_exists':
+    case 'email_exists':
+      return 'Email ini sudah terdaftar. Silakan masuk.'
+    case 'weak_password':
+      return 'Password terlalu lemah. Gunakan kombinasi huruf dan angka.'
+    case 'over_request_rate_limit':
+    case 'over_email_send_rate_limit':
+      return 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.'
+    case 'signup_disabled':
+      return 'Pendaftaran sedang ditutup.'
+  }
+  if (error.status === 429) return 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.'
+  console.error('Supabase auth error:', error.code, error.message)
+  return 'Terjadi kesalahan. Silakan coba lagi.'
+}
+
 export async function login(
   _prevState: AuthActionState,
   formData: FormData,
@@ -23,14 +49,14 @@ export async function login(
   })
 
   if (!parsed.success) {
-    return { fieldErrors: parsed.error.flatten().fieldErrors }
+    return { fieldErrors: z.flattenError(parsed.error).fieldErrors }
   }
 
   const supabase = await createClient()
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data)
 
   if (error) {
-    return { error: error.message }
+    return { error: translateAuthError(error) }
   }
 
   const { data: profile } = await supabase
@@ -58,16 +84,19 @@ export async function register(
   })
 
   if (!parsed.success) {
-    return { fieldErrors: parsed.error.flatten().fieldErrors }
+    return { fieldErrors: z.flattenError(parsed.error).fieldErrors }
   }
 
   const { email, password, full_name, nickname, role } = parsed.data
 
   const supabase = await createClient()
+  const origin = (await headers()).get('origin')
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      // Link konfirmasi email kembali ke route callback supaya sesi dibuat.
+      emailRedirectTo: origin ? `${origin}/auth/callback` : undefined,
       data: {
         full_name,
         nickname: nickname || undefined,
@@ -77,7 +106,7 @@ export async function register(
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: translateAuthError(error) }
   }
 
   // Confirmasi email aktif di project ini: signUp tidak langsung memberi

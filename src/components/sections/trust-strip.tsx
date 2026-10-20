@@ -1,17 +1,27 @@
-export function TrustStrip() {
-  const stats = [
-    { label: 'Lowongan Aktif', value: '1,200+' },
-    { label: 'Mahasiswa Terdaftar', value: '8,500+' },
-    { label: 'Client Terverifikasi', value: '450+' },
+type Stats = { openJobs: number; students: number; clients: number }
+
+// Angka baru ditampilkan setelah platform punya cukup data, supaya
+// landing page tidak memamerkan "0 lowongan" di awal peluncuran.
+const MIN_TOTAL_TO_SHOW = 10
+
+export function TrustStrip({ stats }: { stats: Stats }) {
+  if (stats.openJobs + stats.students + stats.clients < MIN_TOTAL_TO_SHOW) return null
+
+  const items = [
+    { label: 'Lowongan Aktif', value: stats.openJobs },
+    { label: 'Mahasiswa Terdaftar', value: stats.students },
+    { label: 'Client Terdaftar', value: stats.clients },
   ]
 
   return (
-    <section className="bg-white border-y border-[#e3e8de] py-8">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-center divide-y md:divide-y-0 md:divide-x divide-[#e3e8de]">
-        {stats.map((stat) => (
-          <div key={stat.label} className="pt-4 md:pt-0">
-            <p className="text-3xl lg:text-4xl font-extrabold text-[#00623f] mb-1">{stat.value}</p>
-            <p className="text-sm font-medium text-[#3f4942]">{stat.label}</p>
+    <section className="border-y border-border-card bg-white py-6 md:py-8">
+      <div className="mx-auto grid max-w-[1440px] grid-cols-3 gap-2 divide-x divide-border-card px-4 text-center sm:px-6 lg:px-12">
+        {items.map((item) => (
+          <div key={item.label}>
+            <p className="mb-1 text-2xl font-extrabold text-primary sm:text-3xl lg:text-4xl">
+              {item.value.toLocaleString('id-ID')}
+            </p>
+            <p className="text-xs font-medium text-on-surface-variant sm:text-sm">{item.label}</p>
           </div>
         ))}
       </div>
