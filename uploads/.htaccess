@@ -1,7 +1,0 @@
-<FilesMatch "\.(php|phtml|php\d*)$">
-    Require all denied
-</FilesMatch>
-
-<IfModule mod_php.c>
-    php_flag engine off
-</IfModule>

@@ -1,93 +1,69 @@
 # SkillHub
 
-Platform pencarian kerja part-time yang menghubungkan **mahasiswa** dengan **client** (perusahaan/individu) yang butuh bantuan pekerjaan lepas — dari desain, penulisan konten, sampai pengembangan web.
+Marketplace freelance yang menghubungkan mahasiswa dengan client.
+Dibangun dengan **Next.js 16** (App Router), **Supabase** (Postgres + Auth), Tailwind CSS v4, dan daisyUI.
 
-> 🔗 **Live demo:** _tambahkan link setelah deploy_
-> 🖼️ **Screenshot:** _tambahkan setelah screenshot final diambil_
+## Menjalankan di lokal
 
----
+1. Install dependency:
+   ```bash
+   npm install
+   ```
+2. Buat file `.env.local` di root project. Nilainya diambil dari Supabase Dashboard → Project Settings → API:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=https://<ref>.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+   SUPABASE_SERVICE_ROLE_KEY=...   # rahasia, jangan di-commit
 
-## ✨ Fitur
+   # Email notifikasi (lamaran diterima) lewat Gmail SMTP
+   GMAIL_USER=akun@gmail.com
+   GMAIL_APP_PASSWORD=...          # App Password 16 huruf, BUKAN password Gmail
+   ```
+   App Password dibuat di https://myaccount.google.com/apppasswords (verifikasi 2 langkah harus aktif).
+   Kalau dua variabel Gmail dikosongkan, aplikasi tetap jalan, hanya email notifikasi yang dilewati.
+3. Jalankan dev server:
+   ```bash
+   npm run dev
+   ```
+   Lalu buka http://localhost:3000.
 
-**Untuk Mahasiswa**
-- Jelajahi daftar lowongan dengan **pencarian real-time** dan **filter status**
-- Lamar pekerjaan langsung dari daftar lowongan
-- Pantau status lamaran (menunggu / diterima / ditolak)
+## Database
 
-**Untuk Client**
-- Posting lowongan kerja baru
-- Kelola (edit/hapus) lowongan yang sudah diposting
-- Tinjau dan terima/tolak lamaran yang masuk
+Seluruh skema ada di `supabase/migrations/` dan **harus diterapkan berurutan**.
 
-**Pengalaman Pengguna**
-- 🌙 Dark mode dengan preferensi tersimpan (tanpa flash saat reload)
-- 🔔 Notifikasi toast untuk setiap aksi (bukan pesan statis)
-- 💀 Skeleton loading saat data sedang dimuat
-- 🔍 Pencarian dengan debounce, empty-state yang informatif
+- **Lewat CLI:**
+  ```bash
+  npx supabase login
+  npx supabase link --project-ref <ref>
+  npx supabase db push
+  ```
+- **Lewat dashboard:** buka SQL Editor, lalu jalankan isi setiap file migration sesuai urutan nama file.
 
----
+Aturan tim: setiap perubahan database dibuat sebagai file migration baru. Jangan edit tabel langsung di dashboard.
 
-## 🔒 Keamanan
+Generate ulang tipe TypeScript setelah skema berubah. Jalankan dari **Git Bash**, karena `>` di Windows PowerShell 5.1 menyimpan file sebagai UTF-16 dan membuat ESLint gagal:
+```bash
+npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
+```
 
-Dibangun dengan beberapa praktik keamanan standar, bukan cuma CRUD biasa:
+## Struktur
 
-- **Autentikasi berbasis session** (PHP `$_SESSION`) — identitas pengguna tidak pernah dipercaya dari input client
-- **Validasi role di server**, bukan hanya di sisi klien
-- **Password di-hash dengan bcrypt**, sesi diregenerasi saat login (mencegah session fixation)
-- **Proteksi XSS** — semua data dinamis di-escape sebelum dirender ke DOM
-- **Prepared statements** di seluruh query database (aman dari SQL injection)
-- **Rate limiting** pada percobaan login (mencegah brute-force)
-- **Validasi upload file** (tipe MIME asli, ukuran, nama file acak) + eksekusi PHP diblokir di folder upload
-- Proteksi dasar CSRF (validasi Origin/Referer) dan validasi panjang input di sisi server
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Teknologi |
+| Path | Isi |
 |---|---|
-| Backend | PHP native (mysqli) |
-| Database | MySQL |
-| Frontend | HTML, CSS, JavaScript (vanilla, tanpa framework) |
-| Server lokal | Laragon (Apache) |
+| `src/app/(site)/` | Halaman dengan navbar + footer: beranda, `/jobs`, dashboard `/student` dan `/client` |
+| `src/app/auth/` | Login, daftar, callback konfirmasi email, server action auth |
+| `src/proxy.ts` | Refresh sesi Supabase + proteksi route (di Next 16 namanya *proxy*, bukan *middleware*) |
+| `src/lib/queries/` | Query baca data yang dipakai bersama |
+| `src/lib/validations/` | Skema zod untuk semua form |
+| `supabase/migrations/` | Skema database, RLS, trigger |
 
-Dibuat tanpa framework secara sengaja — untuk menunjukkan pemahaman fundamental terhadap PHP, keamanan web, dan JavaScript murni sebelum bergantung pada abstraksi framework.
+## Checklist sebelum deploy
 
----
-
-## 🚀 Menjalankan secara lokal
-
-1. Clone/download repo ini ke folder `www` server lokal kamu (Laragon/XAMPP)
-2. Buat database `skillhub`, import skema di [`skillhub.sql`](./skillhub.sql)
-3. Sesuaikan kredensial di `koneksi.php` jika perlu
-4. Jalankan Apache & MySQL, buka `http://localhost/SkillHub/index.html`
-
-**Catatan:** Project ini menggunakan fitur PHP 8.1+ (`mysqli_sql_exception`). Pastikan server menjalankan PHP 8.1 atau lebih baru.
-
----
-
-## 📁 Struktur Proyek
-
-```
-SkillHub/
-├── api/              # Endpoint backend (auth, CRUD pekerjaan & lamaran)
-│   └── bootstrap.php # Setup session, proteksi CSRF, error handling terpusat
-├── css/style.css      # Styling + dark mode via CSS custom properties
-├── js/                # Logic frontend per halaman
-├── uploads/           # Foto profil pengguna
-├── index.html          # Halaman login/register
-├── client.html          # Dashboard client
-└── mahasiswa.html        # Dashboard mahasiswa
-```
-
----
-
-## 💡 Yang Dipelajari / Ditekankan dalam Proyek Ini
-
-Proyek ini sengaja dikembangkan lewat siklus **build → audit → perbaiki** yang berulang: mulai dari fungsionalitas dasar, lalu diperkuat lewat audit keamanan yang menemukan dan memperbaiki celah nyata (XSS, akses folder `.git` yang tidak sengaja terekspos, kebocoran data sensitif). Pendekatan ini mencerminkan proses pengembangan yang lebih realistis dibanding sekadar membuat fitur yang "terlihat jalan".
-
----
-
-## 📄 Lisensi
-
-Proyek ini dibuat untuk keperluan portofolio/pembelajaran.
+- [ ] Semua migration sudah diterapkan ke project Supabase produksi.
+- [ ] Supabase → Authentication → URL Configuration:
+  - **Site URL** = domain produksi.
+  - **Redirect URLs** berisi `https://<domain>/auth/callback`.
+- [ ] Putuskan apakah *Confirm email* aktif. Kalau aktif, siapkan SMTP sendiri, karena SMTP bawaan Supabase sangat terbatas.
+- [ ] Environment variable di hosting sama dengan isi `.env.local` (termasuk `GMAIL_USER` dan `GMAIL_APP_PASSWORD`).
+- [ ] Batas Gmail SMTP sekitar 500 email/hari. Kalau sudah ramai, pindah ke layanan email dengan domain sendiri (Resend/SES).
+- [ ] `npm run lint` dan `npm run build` lolos.
