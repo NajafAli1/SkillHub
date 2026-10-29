@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 
 import { register, type AuthActionState } from '@/app/auth/actions'
-import { FieldError, FormMessage, Label, SubmitButton, inputClass, submitWithoutReset } from '@/components/ui/form'
+import { EmailInput, FieldError, FormMessage, Label, SubmitButton, inputClass, submitWithoutReset } from '@/components/ui/form'
 
 const initialState: AuthActionState = null
 
@@ -74,7 +74,7 @@ function RegisterForm() {
 
       <div>
         <Label htmlFor="email">Email</Label>
-        <input id="email" name="email" type="email" required autoComplete="email" className={inputClass} />
+        <EmailInput />
         <FieldError errors={state?.fieldErrors?.email} />
       </div>
 

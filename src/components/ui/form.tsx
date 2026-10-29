@@ -18,6 +18,43 @@ export function submitWithoutReset(formAction: (formData: FormData) => void) {
 export const inputClass =
   'mt-1 w-full rounded-[10px] border border-outline-variant bg-white px-3 py-2.5 text-sm text-on-surface placeholder:text-outline focus:border-primary-container focus:outline-none focus:ring-2 focus:ring-primary-container/20'
 
+// Salah ketik paling umum di HP: koma alih-alih titik ("gmail,com") dan spasi.
+// Dibetulkan otomatis saat mengetik; pesan validasi browser diganti bahasa Indonesia.
+function normalizeEmail(value: string) {
+  return value.replace(/,/g, '.').replace(/\s/g, '')
+}
+
+export function EmailInput({ id = 'email', name = 'email' }: { id?: string; name?: string }) {
+  return (
+    <input
+      id={id}
+      name={name}
+      type="email"
+      required
+      autoComplete="email"
+      inputMode="email"
+      autoCapitalize="none"
+      spellCheck={false}
+      placeholder="nama@email.com"
+      className={inputClass}
+      onChange={(e) => {
+        const input = e.currentTarget
+        const fixed = normalizeEmail(input.value)
+        if (fixed !== input.value) input.value = fixed
+        input.setCustomValidity('')
+      }}
+      onInvalid={(e) => {
+        const input = e.currentTarget
+        input.setCustomValidity(
+          input.validity.valueMissing
+            ? 'Email wajib diisi.'
+            : 'Format email tidak valid. Contoh: nama@gmail.com',
+        )
+      }}
+    />
+  )
+}
+
 export function Label({ htmlFor, children }: { htmlFor: string; children: React.ReactNode }) {
   return (
     <label htmlFor={htmlFor} className="block text-sm font-medium text-on-surface">

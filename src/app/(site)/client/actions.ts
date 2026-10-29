@@ -1,10 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { after } from 'next/server'
 import { z } from 'zod'
 
 import { requireRole } from '@/lib/auth'
+import { sendAcceptanceEmails } from '@/lib/email/notify'
 import createClient from '@/lib/supabase/server'
 import { idSchema, jobSchema } from '@/lib/validations/job'
 import type { ActionState } from '@/lib/action-state'
@@ -102,13 +105,23 @@ export async function decideApplication(formData: FormData): Promise<void> {
   // RLS "applications: job owner decides" memastikan hanya pemilik job yang
   // bisa mengubah. Trigger di DB membuat kontrak & menolak pelamar lain.
   const supabase = await createClient()
-  const { error } = await supabase
+  const { data: changed, error } = await supabase
     .from('applications')
     .update({ status: decision.data })
     .eq('id', id.data)
     .eq('job_id', jobId.data)
     .eq('status', 'pending')
+    .select('id')
+    .maybeSingle()
   if (error) console.error('decideApplication:', error.message)
+
+  // Email hanya dikirim bila status benar-benar berubah (bukan klik ganda).
+  // after(): halaman langsung selesai, pengiriman SMTP (~5 detik) berjalan di belakang.
+  if (changed && decision.data === 'accepted') {
+    const h = await headers()
+    const siteUrl = h.get('origin') ?? `${h.get('x-forwarded-proto') ?? 'http'}://${h.get('host')}`
+    after(() => sendAcceptanceEmails({ applicationId: changed.id, siteUrl }))
+  }
 
   revalidatePath(`/client/jobs/${jobId.data}`)
   revalidatePath('/client')

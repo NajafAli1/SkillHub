@@ -186,3 +186,15 @@ export async function getPlatformStats() {
   ])
   return { openJobs, students, clients }
 }
+
+// Email pihak lain dari lamaran yang sudah diterima (lihat migration
+// counterpart_email). Mengembalikan null bila pemanggil tidak berhak.
+export async function getCounterpartEmail(applicationId: string): Promise<string | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('get_counterpart_email', { p_application_id: applicationId })
+  if (error) {
+    console.error('getCounterpartEmail:', error.message)
+    return null
+  }
+  return data ?? null
+}

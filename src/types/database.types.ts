@@ -576,6 +576,10 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["user_role"]
       }
+      get_counterpart_email: {
+        Args: { p_application_id: string }
+        Returns: string
+      }
       is_admin: { Args: never; Returns: boolean }
       is_client: { Args: never; Returns: boolean }
       is_student: { Args: never; Returns: boolean }

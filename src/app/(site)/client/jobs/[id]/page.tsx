@@ -2,10 +2,11 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
+import { EmailContact } from '@/components/ui/email-contact'
 import { SubmitButton } from '@/components/ui/form'
 import { ApplicationStatusBadge, JobStatusBadge } from '@/components/ui/status-badge'
 import { requireRole } from '@/lib/auth'
-import { getJob } from '@/lib/queries/jobs'
+import { getCounterpartEmail, getJob } from '@/lib/queries/jobs'
 import createClient from '@/lib/supabase/server'
 import { formatBudget, timeAgo } from '@/lib/utils'
 import { idSchema } from '@/lib/validations/job'
@@ -35,6 +36,14 @@ export default async function ManageJobPage({ params }: { params: Params }) {
     .order('created_at', { ascending: true })
 
   const list = applications ?? []
+  // Email mahasiswa hanya diambil untuk pelamar yang sudah diterima.
+  const contactEmails = new Map(
+    await Promise.all(
+      list
+        .filter((a) => a.status === 'accepted')
+        .map(async (a) => [a.id, await getCounterpartEmail(a.id)] as const),
+    ),
+  )
   const pendingCount = list.filter((a) => a.status === 'pending').length
 
   return (
@@ -121,6 +130,13 @@ export default async function ManageJobPage({ params }: { params: Params }) {
                     Tawaran: <strong className="text-primary-container">{rupiah(app.proposed_rate)}</strong>
                   </p>
                 )}
+
+                <EmailContact
+                  email={contactEmails.get(app.id) ?? null}
+                  roleLabel="mahasiswa"
+                  name={name}
+                  jobTitle={job.title}
+                />
 
                 {app.status === 'pending' && job.status === 'open' && (
                   <form action={decideApplication} className="mt-4 flex gap-2">
